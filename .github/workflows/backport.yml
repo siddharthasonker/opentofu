@@ -1,0 +1,28 @@
+name: Backport Merged Pull Request
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  backport:
+    name: Backport pull request
+    runs-on: ubuntu-latest
+    if: >
+      github.event.pull_request.merged && ${{contains(github.event.pull_request.labels.*.name, 'backport')}}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run custom bash script for backporting
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        OWNER: ${{ github.event.repository.owner.login }}
+        REPO: ${{ github.event.repository.name }}
+        ISSUE_NUMBER: ${{ github.event.pull_request.number }}
+        HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+      run: |
+        bash ./.github/scripts/backport/main.sh
+      shell: bash
